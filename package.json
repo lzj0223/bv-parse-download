@@ -1,9 +1,9 @@
 {
-  "name": "electron-vue-vite",
+  "name": "bv-parse-download",
   "version": "28.0.0",
   "main": "dist-electron/main/index.js",
-  "description": "Really simple Electron + Vue + Vite boilerplate.",
-  "author": "草鞋没号 <308487730@qq.com>",
+  "description": "B站视频解析下载.",
+  "author": "",
   "license": "MIT",
   "private": true,
   "keywords": [
@@ -26,8 +26,12 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.1",
+    "@vitejs/plugin-vue-jsx": "^3.1.0",
+    "autoprefixer": "^10.4.16",
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
     "tree-kill": "^1.2.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
@@ -35,5 +39,18 @@
     "vite-plugin-electron-renderer": "^0.14.5",
     "vue": "^3.4.1",
     "vue-tsc": "^1.8.27"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@fortawesome/fontawesome-svg-core": "^1.2.36",
+    "@fortawesome/free-brands-svg-icons": "^5.15.4",
+    "@fortawesome/free-regular-svg-icons": "^5.15.4",
+    "@fortawesome/free-solid-svg-icons": "^5.15.4",
+    "@fortawesome/vue-fontawesome": "^3.0.5",
+    "axios": "^1.6.2",
+    "electron-dl": "^3.5.2",
+    "electron-store": "^8.1.0",
+    "element-plus": "^2.5.6",
+    "vue-router": "^4.2.5"
   }
 }

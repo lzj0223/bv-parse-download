@@ -1,7 +1,9 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, session, dialog } from 'electron'
 import { release } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { Options, download, Progress } from 'electron-dl'
+import Store from 'electron-store'
 
 globalThis.__filename = fileURLToPath(import.meta.url)
 globalThis.__dirname = dirname(__filename)
@@ -44,18 +46,86 @@ const preload = join(__dirname, '../preload/index.mjs')
 const url = process.env.VITE_DEV_SERVER_URL
 const indexHtml = join(process.env.DIST, 'index.html')
 
+
+
+// 创建一个新的Store实例
+const store = new Store()
+
+async function handleSelectedDownloadDir() {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: '选择保存路径',
+    properties: ['openDirectory', 'createDirectory']
+  })
+  if (!canceled) {
+    store.set('download-save-dir', filePaths[0])
+    return filePaths[0]
+  }
+}
+
+ipcMain.on('bilibili-download', async (event, info) => {
+  let directory = store.get('download-save-dir');
+  while (!directory) {
+    directory = await handleSelectedDownloadDir()
+  }
+  const opt: Options = {
+    directory: directory as string,
+    filename: info.properties.filename,
+  }
+
+  const allWindows = BrowserWindow.getAllWindows();
+  const win = allWindows.length > 0 ? allWindows[0] : null; // 获取第一个窗口
+  download(win, info.url, opt)
+    .then(dl => {
+      const allWindows = BrowserWindow.getAllWindows();
+      const win = allWindows.length > 0 ? allWindows[0] : null; // 获取第一个窗口
+      if (win) {
+        win.webContents.send('bilibili-download-complete', dl.getSavePath(), info.url);
+      }
+    })
+})
+
+ipcMain.handle('getStoreValue', (event, key) => {
+  return store.get(key)
+})
+
+ipcMain.handle('setStoreValue', (event, key, value) => {
+  return store.set(key, value)
+})
+ipcMain.handle('dialog:openDir', (event, key, value) => {
+  handleSelectedDownloadDir()
+})
+
 async function createWindow() {
+  const filter = { urls: ['*://*/*'] }; // 替换为需要关闭CORS的URL
+
+  session.defaultSession.webRequest.onBeforeSendHeaders(filter, async (details, callback) => {
+    const urlObj = new URL(details.url)
+
+    details.requestHeaders['Origin'] = urlObj.origin;
+
+    details.requestHeaders['Referer'] = urlObj.origin;
+    details.requestHeaders['Cookie'] = await store.get('bilibili-cookie') as string
+    callback({ requestHeaders: details.requestHeaders });
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived(filter, (details, callback) => {
+    details.responseHeaders['Access-Control-Allow-Origin'] = ['*']; // 替换为允许的域名
+    callback({ responseHeaders: details.responseHeaders });
+  });
+
   win = new BrowserWindow({
     title: 'Main window',
     icon: join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // nodeIntegration: true,
+      nodeIntegration: true,
 
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       // contextIsolation: false,
+      // 禁用webSecurity
+      webSecurity: false
     },
   })
 
@@ -77,7 +147,32 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
-  // win.webContents.on('will-navigate', (event, url) => { }) #344
+  //win.webContents.on('will-navigate', (event, url) => { }) #344
+
+
+  //mainwin.js
+  win.webContents.session.on('will-download', (evt, item, webContents) => {
+    let value: number = 0
+
+    item.on('updated', (evt, state) => {
+      process.stdout.write('download:' + state + "\n")
+      if (state === 'progressing') {
+        // 计算进度百分比
+        if (item.getReceivedBytes() && item.getTotalBytes()) {
+          value = Math.round(item.getReceivedBytes() / item.getTotalBytes() * 100)
+        }
+
+        // 发送百分比给渲染进程进行展示
+        webContents.send('bilibili-download-progress', value, item.getURL());
+      }
+    });
+  });
+
+  // 监听 will-download
+  //session.defaultSession.on('will-download', (event, item, webContents) => { })
+
+
+
 }
 
 app.whenReady().then(createWindow)

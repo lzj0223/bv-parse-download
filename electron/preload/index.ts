@@ -1,7 +1,15 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { ipcRenderer, contextBridge, net } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  openDir: () => ipcRenderer.invoke('dialog:openDir'),
+  store: {
+    get: (key: string) => ipcRenderer.invoke('getStoreValue', key),
+    set: (key: string, value: any) => ipcRenderer.invoke('setStoreValue', key, value),
+  },
+})
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.
 function withPrototype(obj: Record<string, any>) {
