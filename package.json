@@ -1,6 +1,6 @@
 {
-  "name": "bv-parse-download",
-  "version": "28.0.0",
+  "name": "bv-parser-downloader",
+  "version": "0.1.0",
   "main": "dist-electron/main/index.js",
   "description": "B站视频解析下载.",
   "author": "",
