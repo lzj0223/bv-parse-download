@@ -18,3 +18,21 @@ declare interface BilibliVideoItem {
     state?: number
     progress?: number
 }
+
+
+
+interface BQRLoginWebGenResponseData {
+    url: string
+    qrcode_key: string
+}
+interface BQRLoginWebPoolResponseData {
+    url: string;
+    refresh_token: string;
+    timestamp: number;
+    code: number;
+    message: string;
+}
+interface BQRLoginErrorData {
+    code: number,
+    message: string,
+}
