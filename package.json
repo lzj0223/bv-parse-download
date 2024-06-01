@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/qs": "^6.9.12",
     "@vitejs/plugin-vue": "^5.0.1",
-    "@vitejs/plugin-vue-jsx": "^3.1.0",
+    "@vitejs/plugin-vue-jsx": "^4.0.0",
     "autoprefixer": "^10.4.16",
     "electron": "^30.0.1",
     "electron-builder": "^24.9.1",
